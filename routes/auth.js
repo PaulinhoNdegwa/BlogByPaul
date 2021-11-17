@@ -13,9 +13,10 @@ router.post('/register', async (req, res) => {
             password: hashedPass,
         });
         const user = await newUser.save();
+        const { password, ...others } = user._doc;
         res.status(200).json({
             "message": "user successfully created",
-            "user": user
+            "user": others
         });
     } catch (error) {
         res.status(500).json({
@@ -29,7 +30,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const user = await User.findOne({ username: req.body.username });
-        if(!user){
+        if (!user) {
             console.log("User not found")
             res.status(400).json({
                 "message": "wrong credentials"
@@ -38,7 +39,7 @@ router.post('/login', async (req, res) => {
         }
 
         const validated = await bcrypt.compare(req.body.password, user.password);
-        if(!validated){
+        if (!validated) {
             console.log("Wrong password")
             res.status(400).json({
                 "message": "wrong credentials"
