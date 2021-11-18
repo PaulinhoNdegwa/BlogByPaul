@@ -5,8 +5,10 @@ const mongoose = require('mongoose');
 
 // Routers
 const authRouter = require('./routes/auth');
-const usersRouter = require('./routes/users');
-const postsRouter = require('./routes/posts');
+const userRouter = require('./routes/users');
+const postRouter = require('./routes/posts');
+const categoryRouter = require('./routes/categories');
+
 
 dotenv.config()
 app.use(express.json())
@@ -16,8 +18,10 @@ mongoose.connect(process.env.MONGO_URL)
 .catch((error) => console.log(error))
  
 app.use("/api/auth", authRouter);
-app.use("/api/users", usersRouter);
-app.use("/api/posts", postsRouter);
+app.use("/api/users", userRouter);
+app.use("/api/posts", postRouter);
+app.use("/api/category", categoryRouter);
+
 
 app.listen("5000", () => {
     console.log("Server up and running...")
