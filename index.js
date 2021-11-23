@@ -23,6 +23,6 @@ app.use("/api/posts", postRouter);
 app.use("/api/category", categoryRouter);
 
 
-app.listen("5000", () => {
-    console.log("Server up and running...")
+app.listen(process.env.PORT || "5000", () => {
+    console.log(`Server up and running on port ${process.env.PORT || "5000"}...`)
 })

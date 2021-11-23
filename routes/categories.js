@@ -6,7 +6,7 @@ router.post('/', async (req, res) => {
     try {
         if (req.body.name && req.body.name.length > 0) {
             const catFound = await Category.find({ name: req.body.name });
-            if(!catFound.length > 0){
+            if (!catFound.length > 0) {
                 const category = new Category(req.body);
                 const newCat = await category.save();
                 res.status(201).json({
