@@ -1,8 +1,9 @@
 const router = require('express').Router();
 const Category = require('../models/Category');
+const auth = require('../middleware/auth');
 
 // Create category
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
     try {
         if (req.body.name && req.body.name.length > 0) {
             const catFound = await Category.find({ name: req.body.name });
@@ -32,7 +33,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
     try {
         const categories = await Category.find();
         res.status(200).json({
