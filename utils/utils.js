@@ -4,6 +4,7 @@ const getUserResponse = (user) => {
     const token = jwt.sign({
         user_id: user._id,
         email: user.email,
+        username: user.username
     },
         process.env.TOKEN_KEY,
         {

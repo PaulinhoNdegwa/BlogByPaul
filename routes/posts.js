@@ -1,20 +1,18 @@
 const router = require('express').Router();
 const User = require('../models/User');
 const Post = require('../models/Post');
+const auth = require('../middleware/auth');
 
 // Create new Post
-router.post('/', async (req, res) => {
-    if (!req.body.userId) {
-        res.status(400).json({ "message": "Provide the userId of the author" });
-        return;
-    }
-    const author = await User.findById(req.body.userId);
+router.post('/', auth, async (req, res) => {
+    
+    const author = await User.findById(req.user.user_id);
     if (!author) {
-        res.status(400).json({
-            "message": "Error provide a valid author userId",
+        return res.status(400).json({
+            "message": "Author account does not exist",
         });
-        return;
     }
+    req.body.userId = author._id;
     try {
         const newPost = new Post(req.body);
         let savedPost = await newPost.save()
@@ -23,7 +21,7 @@ router.post('/', async (req, res) => {
             "author": {
                 "userId": author._id,
                 "username": author.username,
-                "profile": author.profilePic,
+                "profilePic": author.profilePic,
             }
         }
         res.status(201).json({
@@ -59,10 +57,9 @@ router.get('/:id', async (req, res) => {
     try {
         const postFound = await Post.findById(req.params.id);
         if (!postFound) {
-            res.status(404).json({
+            return res.status(404).json({
                 "message": "Post not found",
             });
-            return;
         }
         const author = await User.findById(postFound.userId);
         const response = {
@@ -73,11 +70,10 @@ router.get('/:id', async (req, res) => {
                 "profile": author.profilePic || '',
             }
         }
-        res.status(200).json({
+        return res.status(200).json({
             "message": "Post details fetched successfully",
             "post": response
         });
-        return;
 
 
     } catch (error) {
@@ -90,41 +86,30 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update Post
-router.put('/:id', async (req, res) => {
-    if (!req.body.userId) {
-        res.status(400).json({
-            "message": "You must provide author's userId"
-        });
-        return;
-    }
+router.put('/:id', auth, async (req, res) => {
     try {
         const postFound = await Post.findById(req.params.id);
         if (!postFound) {
-            res.status(404).json({
+            return res.status(404).json({
                 "message": "Post does not exist"
             });
-            return;
         }
-        if (postFound.userId !== req.body.userId) {
-            res.status(401).json({
+        if (postFound.userId !== req.user.user_id) {
+            return res.status(401).json({
                 "message": "You can only edit your own posts"
             });
-            return;
         }
-
-        const { userId, ...others } = req.body
         const updatedPost = await Post.findByIdAndUpdate(req.params.id, {
-            $set: others,
+            $set: req.body,
         }, {
             new: true
         });
-        const author = await User.findById(postFound.userId);
         const response = {
             ...updatedPost._doc,
             "author": {
-                "userId": author._id,
-                "username": author.username,
-                "profile": author.profilePic,
+                "userId": req.user.user_id,
+                "email": req.user.email,
+                "username": req.user.username,
             }
         }
         res.status(200).json({
@@ -141,31 +126,22 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete Post
-router.delete('/:id', async (req, res) => {
-    if (!req.body.userId) {
-        res.status(400).json({
-            "message": "You must provide author's userId"
-        });
-        return;
-    }
-
+router.delete('/:id', auth, async (req, res) => {
     try {
         const postFound = await Post.findById(req.params.id);
         if (!postFound) {
-            res.status(404).json({
+            return res.status(404).json({
                 "message": "Post does not exist"
             });
-            return;
         }
-        if (postFound.userId !== req.body.userId) {
-            res.status(401).json({
-                "message": "You can only edit your own posts"
+        if (postFound.userId !== req.user.user_id) {
+            return res.status(401).json({
+                "message": "You can only delete your own posts"
             });
-            return;
         }
 
         const deletedPost = await postFound.delete();
-        res.status(200).json({
+        return res.status(200).json({
             "message": "User successfully deleted",
             "post": {
                 "postId": deletedPost._id,
@@ -174,7 +150,7 @@ router.delete('/:id', async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             "message": "error when deleting post",
             "error": error.message
         });
